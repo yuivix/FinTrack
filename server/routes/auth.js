@@ -3,6 +3,7 @@ const router = express.Router()
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const pool = require('../db')
+const authenticateToken = require('../middleware/auth')
 
 router.post('/register', async (req, res) => {
   const { email, password } = req.body
@@ -33,6 +34,18 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' })
     res.json({ token })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, email FROM users WHERE id = $1',
+      [req.user.id]
+    )
+    res.json({ user: result.rows[0] })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

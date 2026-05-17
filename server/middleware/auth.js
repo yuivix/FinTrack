@@ -1,3 +1,8 @@
+/*
+    Routes will check request for a valid JWT token. The users id will be attached to the request object 
+    if the token is valid, allowing protected routes to access user-specific data. If the token is 
+    missing or invalid, the middleware will return an appropriate error response.
+*/
 const jwt = require('jsonwebtoken');
 
 const authenticateToken = (req, res, next) => {
