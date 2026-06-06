@@ -29,8 +29,7 @@ function Login() {
         <div className="left">
           <div className="logo">FinTrack</div>
           <div className="header-row">
-            <img src="/src/assets/money.png" alt="FinTrack logo" className="logo-icon" />
-            <h2>Welcome Back</h2>
+            <h2>Welcome back</h2>
           </div>
           <p className="sub">Log in to your FinTrack account</p>
           <div className="divider"></div>

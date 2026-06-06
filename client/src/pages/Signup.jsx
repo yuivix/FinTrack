@@ -28,7 +28,6 @@ function Signup() {
         <div className="left">
           <div className="logo">FinTrack</div>
           <div className="header-row">
-            <img src="/src/assets/money.png" alt="Signup Illustration" className="logo-icon" />
             <h2>Get Started</h2>
           </div>
           <p className="sub">Welcome to FinTrack — Let's create your account</p>
@@ -47,16 +46,23 @@ function Signup() {
               />
             </div>
             <div className="field">
-              <div className="field-label">Password</div>
-              <input
-                type="password"
-                name="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
-            </div>
+  <div className="field-label">Password</div>
+  <input
+    type="password"
+    name="password"
+    placeholder="Enter your password"
+    value={formData.password}
+    onChange={handleChange}
+    required
+  />
+  <ul className="password-requirements">
+    <li>At least 8 characters</li>
+    <li>One uppercase letter</li>
+    <li>One lowercase letter</li>
+    <li>One number</li>
+    <li>One special character (!@#$%^&*)</li>
+  </ul>
+</div>
             <button type="submit" className="btn-primary">Sign up</button>
           </form>
           <div className="login-row">
