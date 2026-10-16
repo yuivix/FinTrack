@@ -11,8 +11,8 @@ const authenticateToken = require('../middleware/auth')
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM transactions WHERE user_id = $1 ORDER BY date DESC',
-      [req.user.id]
+  'SELECT * FROM transactions WHERE user_id = $1 ORDER BY created_at DESC',      
+  [req.user.id]
     )
     res.json({ transactions: result.rows })
   } catch (err) {
