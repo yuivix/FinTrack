@@ -13,6 +13,8 @@ function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [editingTransaction, setEditingTransaction] = useState(null)
   const [editFormData, setEditFormData] = useState({ amount: '', category: '', description: '', date: '' })
+  const [filterStart, setFilterStart] = useState('')
+  const [filterEnd, setFilterEnd] = useState('')
 
   const token = localStorage.getItem('token')
 
@@ -108,6 +110,15 @@ function Dashboard() {
     ).sort((a, b) => b[1] - a[1])[0][0]
     : '—'
 
+  const filteredTransactions = transactions.filter(t => {
+    const date = new Date(t.date)
+    const start = filterStart ? new Date(filterStart) : null
+    const end = filterEnd ? new Date(filterEnd) : null
+    if (start && date < start) return false
+    if (end && date > end) return false
+    return true
+  })
+
   const years = [...new Set(transactions.map(t => new Date(t.date).getFullYear()))].sort((a, b) => b - a)
   if (!years.includes(selectedYear)) years.push(selectedYear)
 
@@ -182,11 +193,22 @@ function Dashboard() {
           </div>
 
           {/* Recent Transactions */}
-          <div style={{ ...cardStyle, flex: 1, marginBottom: 0, maxHeight: '335px', overflowY: 'auto' }}>            <h2 style={sectionTitle}>Recent Transactions</h2>
-            {transactions.length === 0 ? (
+          <div style={{ ...cardStyle, flex: 1, marginBottom: 0, maxHeight: '335px', overflowY: 'auto' }}>
+            <h2 style={sectionTitle}>Recent Transactions</h2>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', alignItems: 'center' }}>
+              <input type="date" value={filterStart} onChange={e => setFilterStart(e.target.value)} style={{ ...inputStyle, fontSize: '12px', padding: '6px 10px' }} />
+              <span style={{ color: '#888', fontSize: '12px' }}>to</span>
+              <input type="date" value={filterEnd} onChange={e => setFilterEnd(e.target.value)} style={{ ...inputStyle, fontSize: '12px', padding: '6px 10px' }} />
+              {(filterStart || filterEnd) && (
+                <button onClick={() => { setFilterStart(''); setFilterEnd('') }} style={{ background: '#f0f0f0', border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '12px', cursor: 'pointer', color: '#555' }}>
+                  Clear
+                </button>
+              )}
+            </div>            
+            {filteredTransactions.length === 0 ? (
               <p style={{ color: '#888', fontSize: '14px' }}>No transactions yet.</p>
             ) : (
-              transactions.map(t => (
+              filteredTransactions.map(t => (
                 <div key={t.id} style={transactionRow}>
                   <div>
                     <div style={{ fontWeight: '600', fontSize: '15px', color: '#111' }}>{t.category}</div>
@@ -261,32 +283,32 @@ function Dashboard() {
             </ResponsiveContainer>
           )}
         </div>
-{/* Edit Modal */}
-{editingTransaction && (
-  <div style={modalOverlay}>
-    <div style={modalBox}>
-      <h2 style={{ ...sectionTitle, marginBottom: '20px' }}>Edit Transaction</h2>
-      <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <input name="amount" type="number" value={editFormData.amount} onChange={e => setEditFormData({ ...editFormData, amount: e.target.value })} required style={inputStyle} />
-        <select name="category" value={editFormData.category} onChange={e => setEditFormData({ ...editFormData, category: e.target.value })} required style={inputStyle}>
-          <option value="">Select category</option>
-          <option value="Food">Food</option>
-          <option value="Shopping">Shopping</option>
-          <option value="Entertainment">Entertainment</option>
-          <option value="Transport">Transport</option>
-          <option value="Health">Health</option>
-          <option value="Other">Other</option>
-        </select>
-        <input name="description" type="text" placeholder="Description (optional)" value={editFormData.description} onChange={e => setEditFormData({ ...editFormData, description: e.target.value })} style={inputStyle} />
-        <input name="date" type="date" value={editFormData.date} onChange={e => setEditFormData({ ...editFormData, date: e.target.value })} required style={inputStyle} />
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button type="submit" style={{ ...btnStyle, flex: 1 }}>Save Changes</button>
-          <button type="button" onClick={() => setEditingTransaction(null)} style={{ ...btnStyle, flex: 1, background: '#f0f0f0', color: '#555' }}>Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
+        {/* Edit Modal */}
+        {editingTransaction && (
+          <div style={modalOverlay}>
+            <div style={modalBox}>
+              <h2 style={{ ...sectionTitle, marginBottom: '20px' }}>Edit Transaction</h2>
+              <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <input name="amount" type="number" value={editFormData.amount} onChange={e => setEditFormData({ ...editFormData, amount: e.target.value })} required style={inputStyle} />
+                <select name="category" value={editFormData.category} onChange={e => setEditFormData({ ...editFormData, category: e.target.value })} required style={inputStyle}>
+                  <option value="">Select category</option>
+                  <option value="Food">Food</option>
+                  <option value="Shopping">Shopping</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Transport">Transport</option>
+                  <option value="Health">Health</option>
+                  <option value="Other">Other</option>
+                </select>
+                <input name="description" type="text" placeholder="Description (optional)" value={editFormData.description} onChange={e => setEditFormData({ ...editFormData, description: e.target.value })} style={inputStyle} />
+                <input name="date" type="date" value={editFormData.date} onChange={e => setEditFormData({ ...editFormData, date: e.target.value })} required style={inputStyle} />
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button type="submit" style={{ ...btnStyle, flex: 1 }}>Save Changes</button>
+                  <button type="button" onClick={() => setEditingTransaction(null)} style={{ ...btnStyle, flex: 1, background: '#f0f0f0', color: '#555' }}>Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
