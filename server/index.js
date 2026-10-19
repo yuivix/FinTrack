@@ -3,6 +3,7 @@ const cors = require('cors')
 require('dotenv').config()
 const authRoutes = require('./routes/auth')
 const transactionRoutes = require('./routes/transactions')
+const plaidRoutes = require('./routes/plaid')
 
 const app = express()
 app.use(cors())
@@ -10,7 +11,7 @@ app.use(express.json())
 
 app.use('/auth', authRoutes)
 app.use('/transactions', transactionRoutes)
-
+app.use('/plaid', plaidRoutes)
 
 app.get('/', (req, res) => {
   res.send('FinTrack server running')

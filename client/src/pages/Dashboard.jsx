@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Navbar from '../components/Navbar'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { usePlaidLink } from 'react-plaid-link'
 
 function Dashboard() {
   const [transactions, setTransactions] = useState([])
@@ -15,6 +16,8 @@ function Dashboard() {
   const [editFormData, setEditFormData] = useState({ amount: '', category: '', description: '', date: '' })
   const [filterStart, setFilterStart] = useState('')
   const [filterEnd, setFilterEnd] = useState('')
+  const [linkToken, setLinkToken] = useState(null)
+  const [bankConnected, setBankConnected] = useState(false)
 
   const token = localStorage.getItem('token')
 
@@ -40,9 +43,35 @@ function Dashboard() {
     }
   }
 
+  const fetchLinkToken = async () => {
+    try {
+      const res = await axios.post('http://localhost:5000/plaid/create-link-token', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setLinkToken(res.data.link_token)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const { open, ready } = usePlaidLink({
+    token: linkToken,
+    onSuccess: async (public_token) => {
+      try {
+        await axios.post('http://localhost:5000/plaid/exchange-token', { public_token }, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        setBankConnected(true)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+  })
+
   useEffect(() => {
     fetchUser()
     fetchTransactions()
+    fetchLinkToken()
   }, [])
 
   const handleChange = (e) => {
@@ -90,6 +119,18 @@ function Dashboard() {
         headers: { Authorization: `Bearer ${token}` }
       })
       setEditingTransaction(null)
+      fetchTransactions()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleSync = async () => {
+    try {
+      const res = await axios.post('http://localhost:5000/plaid/sync', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      alert(res.data.message)
       fetchTransactions()
     } catch (err) {
       console.error(err)
@@ -148,9 +189,21 @@ function Dashboard() {
       <Navbar user={user} />
 
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '40px 24px' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: '600', marginBottom: '32px', color: '#111' }}>
-          Dashboard
-        </h1>
+
+        {/* Dashboard Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+          <h1 style={{ fontSize: '22px', fontWeight: '600', color: '#111' }}>Dashboard</h1>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => open()} disabled={!ready} style={{ ...btnStyle, background: '#1a2e1a', padding: '10px 20px', fontSize: '14px' }}>
+              {bankConnected ? '✓ Bank Connected' : 'Connect Bank'}
+            </button>
+            {bankConnected && (
+              <button onClick={handleSync} style={{ ...btnStyle, padding: '10px 20px', fontSize: '14px' }}>
+                Sync Transactions
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Summary Cards */}
         <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
@@ -204,7 +257,7 @@ function Dashboard() {
                   Clear
                 </button>
               )}
-            </div>            
+            </div>
             {filteredTransactions.length === 0 ? (
               <p style={{ color: '#888', fontSize: '14px' }}>No transactions yet.</p>
             ) : (
@@ -219,7 +272,8 @@ function Dashboard() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{ fontWeight: '600', fontSize: '16px', color: '#1a2e1a' }}>${t.amount}</div>
                     <button onClick={() => handleEditClick(t)} style={editBtn}>Edit</button>
-                    <button onClick={() => handleDelete(t.id)} style={deleteBtn}>Delete</button>                  </div>
+                    <button onClick={() => handleDelete(t.id)} style={deleteBtn}>Delete</button>
+                  </div>
                 </div>
               ))
             )}
@@ -227,7 +281,7 @@ function Dashboard() {
 
         </div>
 
-        {/* Spending Overview - full width below */}
+        {/* Spending Overview */}
         <div style={cardStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h2 style={sectionTitle}>Spending Overview</h2>
@@ -243,16 +297,11 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* Tabs */}
           <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-            <button
-              onClick={() => setChartTab('bar')}
-              style={{ ...tabBtn, background: chartTab === 'bar' ? '#1a2e1a' : '#f0f0f0', color: chartTab === 'bar' ? '#fff' : '#555' }}>
+            <button onClick={() => setChartTab('bar')} style={{ ...tabBtn, background: chartTab === 'bar' ? '#1a2e1a' : '#f0f0f0', color: chartTab === 'bar' ? '#fff' : '#555' }}>
               By Category
             </button>
-            <button
-              onClick={() => setChartTab('line')}
-              style={{ ...tabBtn, background: chartTab === 'line' ? '#1a2e1a' : '#f0f0f0', color: chartTab === 'line' ? '#fff' : '#555' }}>
+            <button onClick={() => setChartTab('line')} style={{ ...tabBtn, background: chartTab === 'line' ? '#1a2e1a' : '#f0f0f0', color: chartTab === 'line' ? '#fff' : '#555' }}>
               By Month
             </button>
           </div>
@@ -283,33 +332,36 @@ function Dashboard() {
             </ResponsiveContainer>
           )}
         </div>
-        {/* Edit Modal */}
-        {editingTransaction && (
-          <div style={modalOverlay}>
-            <div style={modalBox}>
-              <h2 style={{ ...sectionTitle, marginBottom: '20px' }}>Edit Transaction</h2>
-              <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <input name="amount" type="number" value={editFormData.amount} onChange={e => setEditFormData({ ...editFormData, amount: e.target.value })} required style={inputStyle} />
-                <select name="category" value={editFormData.category} onChange={e => setEditFormData({ ...editFormData, category: e.target.value })} required style={inputStyle}>
-                  <option value="">Select category</option>
-                  <option value="Food">Food</option>
-                  <option value="Shopping">Shopping</option>
-                  <option value="Entertainment">Entertainment</option>
-                  <option value="Transport">Transport</option>
-                  <option value="Health">Health</option>
-                  <option value="Other">Other</option>
-                </select>
-                <input name="description" type="text" placeholder="Description (optional)" value={editFormData.description} onChange={e => setEditFormData({ ...editFormData, description: e.target.value })} style={inputStyle} />
-                <input name="date" type="date" value={editFormData.date} onChange={e => setEditFormData({ ...editFormData, date: e.target.value })} required style={inputStyle} />
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button type="submit" style={{ ...btnStyle, flex: 1 }}>Save Changes</button>
-                  <button type="button" onClick={() => setEditingTransaction(null)} style={{ ...btnStyle, flex: 1, background: '#f0f0f0', color: '#555' }}>Cancel</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+
       </div>
+
+      {/* Edit Modal */}
+      {editingTransaction && (
+        <div style={modalOverlay}>
+          <div style={modalBox}>
+            <h2 style={{ ...sectionTitle, marginBottom: '20px' }}>Edit Transaction</h2>
+            <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <input name="amount" type="number" value={editFormData.amount} onChange={e => setEditFormData({ ...editFormData, amount: e.target.value })} required style={inputStyle} />
+              <select name="category" value={editFormData.category} onChange={e => setEditFormData({ ...editFormData, category: e.target.value })} required style={inputStyle}>
+                <option value="">Select category</option>
+                <option value="Food">Food</option>
+                <option value="Shopping">Shopping</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Transport">Transport</option>
+                <option value="Health">Health</option>
+                <option value="Other">Other</option>
+              </select>
+              <input name="description" type="text" placeholder="Description (optional)" value={editFormData.description} onChange={e => setEditFormData({ ...editFormData, description: e.target.value })} style={inputStyle} />
+              <input name="date" type="date" value={editFormData.date} onChange={e => setEditFormData({ ...editFormData, date: e.target.value })} required style={inputStyle} />
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button type="submit" style={{ ...btnStyle, flex: 1 }}>Save Changes</button>
+                <button type="button" onClick={() => setEditingTransaction(null)} style={{ ...btnStyle, flex: 1, background: '#f0f0f0', color: '#555' }}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
