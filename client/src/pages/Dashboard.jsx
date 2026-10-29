@@ -3,6 +3,7 @@ import axios from 'axios'
 import Navbar from '../components/Navbar'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { usePlaidLink } from 'react-plaid-link'
+import API_URL from '../config'
 
 function Dashboard() {
   const [transactions, setTransactions] = useState([])
@@ -23,7 +24,7 @@ function Dashboard() {
 
   const fetchUser = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/auth/me', {
+      const res = await axios.get('${API_URL}/auth/me', {
         headers: { Authorization: `Bearer ${token}` }
       })
       setUser(res.data.user)
@@ -34,7 +35,7 @@ function Dashboard() {
 
   const fetchTransactions = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/transactions', {
+      const res = await axios.get('${API_URL}/transactions', {
         headers: { Authorization: `Bearer ${token}` }
       })
       setTransactions(res.data.transactions)
@@ -45,7 +46,7 @@ function Dashboard() {
 
   const fetchLinkToken = async () => {
     try {
-      const res = await axios.post('http://localhost:5000/plaid/create-link-token', {}, {
+      const res = await axios.post('${API_URL}/plaid/create-link-token', {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setLinkToken(res.data.link_token)
@@ -58,7 +59,7 @@ function Dashboard() {
     token: linkToken,
     onSuccess: async (public_token) => {
       try {
-        await axios.post('http://localhost:5000/plaid/exchange-token', { public_token }, {
+        await axios.post('${API_URL}/plaid/exchange-token', { public_token }, {
           headers: { Authorization: `Bearer ${token}` }
         })
         setBankConnected(true)
@@ -81,7 +82,7 @@ function Dashboard() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await axios.post('http://localhost:5000/transactions', formData, {
+      await axios.post('${API_URL}/transactions', formData, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setFormData({ amount: '', category: '', description: '', date: '' })
@@ -93,7 +94,7 @@ function Dashboard() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/transactions/${id}`, {
+      await axios.delete(`${API_URL}/transactions/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       fetchTransactions()
@@ -115,7 +116,7 @@ function Dashboard() {
   const handleEditSubmit = async (e) => {
     e.preventDefault()
     try {
-      await axios.put(`http://localhost:5000/transactions/${editingTransaction.id}`, editFormData, {
+      await axios.put(`${API_URL}/transactions/${editingTransaction.id}`, editFormData, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setEditingTransaction(null)
@@ -127,7 +128,7 @@ function Dashboard() {
 
   const handleSync = async () => {
     try {
-      const res = await axios.post('http://localhost:5000/plaid/sync', {}, {
+      const res = await axios.post('${API_URL}/plaid/sync', {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
       alert(res.data.message)

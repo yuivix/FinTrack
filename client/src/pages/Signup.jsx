@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 import './Auth.css'
+import API_URL from '../config'
 
 function Signup() {
   const navigate = useNavigate()
@@ -15,7 +16,7 @@ function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await axios.post('http://localhost:5000/auth/register', formData)
+      await axios.post('${API_URL}/auth/register', formData)
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong')
