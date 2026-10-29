@@ -16,7 +16,7 @@ function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await axios.post('${API_URL}/auth/register', formData)
+      await axios.post(`${API_URL}/auth/register`, formData)
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong')

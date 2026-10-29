@@ -24,7 +24,7 @@ function Dashboard() {
 
   const fetchUser = async () => {
     try {
-      const res = await axios.get('${API_URL}/auth/me', {
+      const res = await axios.get(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setUser(res.data.user)
@@ -35,7 +35,7 @@ function Dashboard() {
 
   const fetchTransactions = async () => {
     try {
-      const res = await axios.get('${API_URL}/transactions', {
+      const res = await axios.get(`${API_URL}/transactions`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setTransactions(res.data.transactions)
@@ -46,7 +46,7 @@ function Dashboard() {
 
   const fetchLinkToken = async () => {
     try {
-      const res = await axios.post('${API_URL}/plaid/create-link-token', {}, {
+      const res = await axios.post(`${API_URL}/plaid/create-link-token`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setLinkToken(res.data.link_token)
@@ -59,7 +59,7 @@ function Dashboard() {
     token: linkToken,
     onSuccess: async (public_token) => {
       try {
-        await axios.post('${API_URL}/plaid/exchange-token', { public_token }, {
+        await axios.post(`${API_URL}/plaid/exchange-token`, { public_token }, {
           headers: { Authorization: `Bearer ${token}` }
         })
         setBankConnected(true)
@@ -82,7 +82,7 @@ function Dashboard() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await axios.post('${API_URL}/transactions', formData, {
+      await axios.post(`${API_URL}/transactions`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setFormData({ amount: '', category: '', description: '', date: '' })
@@ -128,7 +128,7 @@ function Dashboard() {
 
   const handleSync = async () => {
     try {
-      const res = await axios.post('${API_URL}/plaid/sync', {}, {
+      const res = await axios.post(`${API_URL}/plaid/sync`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
       alert(res.data.message)
